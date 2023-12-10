@@ -50,6 +50,7 @@ class PolicyWithValue(object):
 
         # Take an action
         self.action = self.pd.sample()
+        self.probs = self.pd.probs()
 
         # Calculate the neg log of our probability
         self.neglogp = self.pd.neglogp(self.action)
@@ -74,7 +75,7 @@ class PolicyWithValue(object):
 
         return sess.run(variables, feed_dict)
 
-    def step(self, observation, **extra_feed):
+    def step(self, observation, action_index=None, **extra_feed):
         """
         Compute next action(s) given the observation(s)
 
@@ -94,6 +95,18 @@ class PolicyWithValue(object):
         if state.size == 0:
             state = None
         return a, v, state, neglogp
+    
+    def step_for_integrated_gradients(self, observation, action_index=None, **extra_feed):
+        if action_index is None:
+            action_index = self.action[0]
+        
+        self.gradients = tf.gradients(self.probs[:, action_index], self.X)
+
+        a, v, state, neglogp, probs, gradients = self._evaluate([self.action, self.vf, self.state, self.neglogp, self.probs, self.gradients], observation, **extra_feed)
+        if state.size == 0:
+            state = None
+
+        return a, v, state, neglogp, probs, gradients
 
     def value(self, ob, *args, **kwargs):
         """
