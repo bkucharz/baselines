@@ -181,6 +181,8 @@ class CategoricalPd(Pd):
         return tf.nn.softmax_cross_entropy_with_logits_v2(
             logits=self.logits,
             labels=x)
+    def probs(self):
+        return tf.nn.softmax(logits=self.logits)   
     def kl(self, other):
         a0 = self.logits - tf.reduce_max(self.logits, axis=-1, keepdims=True)
         a1 = other.logits - tf.reduce_max(other.logits, axis=-1, keepdims=True)
